@@ -63,9 +63,10 @@ def _run(job_id, prompt, voice):
         JOBS[job_id].update({"status": "error", "error": str(e)})
 
 if __name__ == "__main__":
-    import uvicorn
+    import os, uvicorn
+    port = int(os.environ.get("PORT", 8000))
     print("\033[91m" + "="*50)
-    print("  OBSCURA — http://localhost:8000")
-    print("  API docs — http://localhost:8000/api/docs")
+    print(f"  OBSCURA — http://0.0.0.0:{port}")
+    print("  API docs — http://0.0.0.0:{port}/api/docs")
     print("="*50 + "\033[0m")
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
