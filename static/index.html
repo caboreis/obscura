@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBSCURA — Génération de vidéos horreur</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --border: #1e1e2a;
+  --text: #e0e0e8;
+  --muted: #6a6a7a;
+  --accent: #c0392b;
+  --accent-hover: #e74c3c;
+  --success: #27ae60;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.container {
+  width: 100%;
+  max-width: 640px;
+  padding: 40px 24px;
+}
+header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+h1 {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #c0392b 0%, #8e44ad 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.subtitle {
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+textarea, select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 15px;
+  padding: 14px 16px;
+  font-family: var(--font);
+  transition: border-color 0.2s;
+  outline: none;
+}
+textarea:focus, select:focus { border-color: var(--accent); }
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+select {
+  appearance: none;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+.btn {
+  width: 100%;
+  padding: 14px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: var(--font);
+  letter-spacing: 0.5px;
+}
+.btn:hover { background: var(--accent-hover); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.status {
+  display: none;
+  padding: 16px 20px;
+  border-radius: 10px;
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.status.visible { display: block; }
+.status.queued { background: rgba(241,196,15,0.1); border: 1px solid rgba(241,196,15,0.3); color: #f1c40f; }
+.status.generating { background: rgba(52,152,219,0.1); border: 1px solid rgba(52,152,219,0.3); color: #3498db; }
+.status.done { background: rgba(39,174,96,0.1); border: 1px solid rgba(39,174,96,0.3); color: #2ecc71; }
+.status.error { background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.3); color: #e74c3c; }
+.video-result { display: none; margin-top: 16px; }
+.video-result.visible { display: block; }
+video {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.tagline {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 32px;
+  line-height: 1.6;
+}
+.price-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-left: 8px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>OBSCURA</h1>
+    <p class="subtitle">Génération de vidéos YouTube Shorts</p>
+  </header>
+
+  <div class="card">
+    <label for="prompt">Histoire / Prompt</label>
+    <textarea id="prompt" placeholder="Ex: Un homme entre dans une maison abandonnée et découvre un miroir qui montre son futur moi mort..."></textarea>
+    
+    <label for="voice" style="margin-top:16px">Voix</label>
+    <select id="voice">
+      <option value="fr-FR-HenriNeural">Henri — Homme (Neural)</option>
+      <option value="fr-FR-DeniseNeural">Denise — Femme (Neural)</option>
+      <option value="fr-FR-EloiseNeural">Éloïse — Femme (Neural)</option>
+      <option value="fr-FR-VivienneMultilingualNeural">Vivienne — Multilingue</option>
+      <option value="fr-BE-CharlineNeural">Charline — Belgique</option>
+      <option value="fr-CA-SylvieNeural">Sylvie — Canada</option>
+    </select>
+
+    <button class="btn" id="generateBtn" onclick="generate()">Générer la vidéo</button>
+
+    <div id="status" class="status"></div>
+    
+    <div id="videoResult" class="video-result">
+      <video id="videoPlayer" controls playsinline></video>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <a id="downloadBtn" class="btn" style="flex:1;text-align:center;text-decoration:none;background:var(--success)" href="#">Télécharger MP4</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="font-size:14px;line-height:1.8;color:var(--muted)">
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px;color:var(--text)">
+      <span>Gratuit</span>
+      <span style="color:var(--accent)">Pro — €19/mois</span>
+      <span style="color:var(--accent)">Studio — €49/mois</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px">
+      <span>1 vidéo/mois</span>
+      <span>10 vidéos/mois</span>
+      <span>50 vidéos/mois + API</span>
+    </div>
+  </div>
+
+  <p class="tagline">
+    Photos réelles Pexels ⋆ Voix neurale Edge-TTS ⋆ Musique d'ambiance ⋆ Sous-titres<br>
+    Généré en 2-5 minutes ⋆ Prêt à upload sur YouTube
+  </p>
+</div>
+
+<script>
+const POLL_INTERVAL = 3000;
+let pollTimer = null;
+
+async function generate() {
+  const btn = document.getElementById('generateBtn');
+  const prompt = document.getElementById('prompt').value.trim();
+  const voice = document.getElementById('voice').value;
+  const statusEl = document.getElementById('status');
+  const videoResult = document.getElementById('videoResult');
+
+  if (prompt.length < 10) {
+    showStatus('Le prompt doit faire au moins 10 caractères', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Génération en cours...';
+  videoResult.classList.remove('visible');
+  showStatus('Lancement de la génération...', 'queued');
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, voice })
+    });
+    const data = await res.json();
+    if (!res.ok) { showStatus(data.detail || 'Erreur', 'error'); btn.disabled = false; btn.textContent = 'Générer la vidéo'; return; }
+    
+    showStatus('Vidéo en cours de génération (2-5 min)...', 'generating');
+    pollTimer = setInterval(() => pollStatus(data.job_id), POLL_INTERVAL);
+  } catch (e) {
+    showStatus('Erreur réseau: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Générer la vidéo';
+  }
+}
+
+async function pollStatus(jobId) {
+  try {
+    const res = await fetch('/api/status/' + jobId);
+    const data = await res.json();
+    
+    if (data.status === 'done') {
+      clearInterval(pollTimer);
+      showStatus('✅ Vidéo générée !', 'done');
+      document.getElementById('generateBtn').disabled = false;
+      document.getElementById('generateBtn').textContent = 'Générer une autre vidéo';
+      const vid = document.getElementById('videoPlayer');
+      vid.src = '/api/download/' + jobId;
+      vid.load();
+      document.getElementById('videoResult').classList.add('visible');
+      document.getElementById('downloadBtn').href = '/api/download/' + jobId;
+    } else if (data.status === 'error') {
+      clearInterval(pollTimer);
+      showStatus('❌ Erreur: ' + (data.error || 'Inconnue'), 'error');
+      document.getElementById('generateBtn').disabled = false;
+      document.getElementById('generateBtn').textContent = 'Générer la vidéo';
+    } else {
+      showStatus('⏳ Génération en cours... (' + data.status + ')', 'generating');
+    }
+  } catch (e) {
+    // silent
+  }
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status visible ' + type;
+}
+</script>
+</body>
+</html>
